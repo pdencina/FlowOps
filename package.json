@@ -1,0 +1,27 @@
+{
+  "name": "flowops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FlowOps — Never ask 'what happened with that?' again",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "clean": "turbo clean",
+    "db:migrate": "pnpm --filter @flowops/database migrate",
+    "db:seed": "pnpm --filter @flowops/database seed",
+    "db:generate": "pnpm --filter @flowops/database generate",
+    "db:studio": "pnpm --filter @flowops/database studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.0",
+    "typescript": "^5.5.0"
+  },
+  "packageManager": "pnpm@9.7.0",
+  "pnpm": {
+    "overrides": {}
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

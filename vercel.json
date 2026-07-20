@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd apps/web && npx next build",
+  "installCommand": "npx pnpm@9 install --no-frozen-lockfile",
+  "framework": "nextjs",
+  "outputDirectory": "apps/web/.next",
+  "root": "."
+}
