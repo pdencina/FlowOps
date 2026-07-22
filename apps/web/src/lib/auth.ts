@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { db, setTenantContext } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { users, memberships } from '@flowops/database';
+import { users, memberships, tenants } from '@flowops/database';
 
 export interface SessionUser {
   id: string;
@@ -15,47 +15,91 @@ export interface SessionUser {
  * Gets the current authenticated user with their tenant context.
  * Returns null if not authenticated.
  *
- * Use in Server Components and Route Handlers.
+ * If the user exists in Supabase Auth but not in our DB,
+ * creates the user record automatically (handles failed signups).
  */
 export async function getSession(): Promise<SessionUser | null> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) return null;
+    if (!user) return null;
 
-  // Get user record with membership
-  const [dbUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.authId, user.id))
-    .limit(1);
+    // Get user record
+    let [dbUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.authId, user.id))
+      .limit(1);
 
-  if (!dbUser) return null;
+    // If user doesn't exist in our DB, create them (handles failed signup)
+    if (!dbUser) {
+      const meta = user.user_metadata || {};
+      const name = meta.name || user.email?.split('@')[0] || 'Usuario';
+      const company = meta.company || `${name}'s Company`;
 
-  // Get first membership (for MVP, users belong to one tenant)
-  const [membership] = await db
-    .select()
-    .from(memberships)
-    .where(eq(memberships.userId, dbUser.id))
-    .limit(1);
+      // Create tenant
+      const slug = company
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 100);
 
-  if (!membership) return null;
+      const [tenant] = await db
+        .insert(tenants)
+        .values({
+          name: company,
+          slug: `${slug}-${Date.now().toString(36)}`,
+          plan: 'free',
+          settings: {},
+        })
+        .returning();
 
-  // Set tenant context for RLS
-  await setTenantContext(membership.tenantId);
+      // Create user
+      [dbUser] = await db
+        .insert(users)
+        .values({
+          authId: user.id,
+          name,
+          email: user.email || '',
+        })
+        .returning();
 
-  return {
-    id: dbUser.id,
-    email: dbUser.email,
-    name: dbUser.name,
-    tenantId: membership.tenantId,
-    role: membership.role as SessionUser['role'],
-  };
+      // Create membership
+      await db.insert(memberships).values({
+        tenantId: tenant.id,
+        userId: dbUser.id,
+        role: 'admin',
+      });
+    }
+
+    // Get membership
+    const [membership] = await db
+      .select()
+      .from(memberships)
+      .where(eq(memberships.userId, dbUser.id))
+      .limit(1);
+
+    if (!membership) return null;
+
+    // Set tenant context for RLS
+    await setTenantContext(membership.tenantId);
+
+    return {
+      id: dbUser.id,
+      email: dbUser.email,
+      name: dbUser.name,
+      tenantId: membership.tenantId,
+      role: membership.role as SessionUser['role'],
+    };
+  } catch (error) {
+    console.error('getSession error:', error);
+    return null;
+  }
 }
 
 /**
- * Requires authentication. Throws redirect if not authenticated.
- * Use in Route Handlers where you need guaranteed auth.
+ * Requires authentication. Throws if not authenticated.
  */
 export async function requireSession(): Promise<SessionUser> {
   const session = await getSession();
