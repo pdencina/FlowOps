@@ -33,10 +33,12 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run on static assets or API webhooks
+  // Do not run auth check on public paths
   const isPublicPath =
     request.nextUrl.pathname.startsWith('/auth') ||
+    request.nextUrl.pathname.startsWith('/api/auth') ||
     request.nextUrl.pathname.startsWith('/api/webhooks') ||
+    request.nextUrl.pathname.startsWith('/api/inngest') ||
     request.nextUrl.pathname.startsWith('/_next') ||
     request.nextUrl.pathname === '/';
 
