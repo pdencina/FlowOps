@@ -4,7 +4,9 @@ import { users, timelineEntries } from '@flowops/database';
 import { eq } from 'drizzle-orm';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 /**
  * Sends a reminder to an approver who hasn't responded.
@@ -37,7 +39,7 @@ export const sendReminderFn = inngest.createFunction(
 
       const tone = tones[reminderNumber as keyof typeof tones] || tones[3];
 
-      await resend.emails.send({
+      await getResend().emails.send({
         from: process.env.EMAIL_FROM || 'FlowOps <notifications@flowops.app>',
         to: user.email,
         subject: tone.subject,

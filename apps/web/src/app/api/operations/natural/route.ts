@@ -10,7 +10,9 @@ const inputSchema = z.object({
   input: z.string().min(1).max(2000),
 });
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 // POST /api/operations/natural — Create operation from natural language
 export async function POST(request: NextRequest) {
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
       fields: t.fields,
     }));
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       temperature: 0.1,
       response_format: { type: 'json_object' },

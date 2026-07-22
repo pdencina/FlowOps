@@ -4,7 +4,9 @@ import { users, slaInstances } from '@flowops/database';
 import { eq, and } from 'drizzle-orm';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 /**
  * Triggered when an approval decision is made.
@@ -33,7 +35,7 @@ export const approvalDecidedFn = inngest.createFunction(
       const statusEmoji = decision === 'approved' ? '✅' : '❌';
       const statusText = decision === 'approved' ? 'aprobada' : 'rechazada';
 
-      await resend.emails.send({
+      await getResend().emails.send({
         from: process.env.EMAIL_FROM || 'FlowOps <notifications@flowops.app>',
         to: requester.email,
         subject: `${statusEmoji} Tu operación fue ${statusText}: ${operationTitle}`,

@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@flowops/shared', '@flowops/database'],
-  serverExternalPackages: ['postgres'],
+  experimental: {
+    serverComponentsExternalPackages: ['postgres'],
+  },
 };
 
 module.exports = nextConfig;

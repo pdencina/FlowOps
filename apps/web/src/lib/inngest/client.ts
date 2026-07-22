@@ -9,7 +9,6 @@ import { Inngest } from 'inngest';
  */
 export const inngest = new Inngest({
   id: 'flowops',
-  schemas: new Map(),
 });
 
 // ---- Event Types ----
