@@ -39,6 +39,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/api/auth') ||
     request.nextUrl.pathname.startsWith('/api/webhooks') ||
     request.nextUrl.pathname.startsWith('/api/inngest') ||
+    request.nextUrl.pathname.startsWith('/api/debug') ||
     request.nextUrl.pathname.startsWith('/_next') ||
     request.nextUrl.pathname === '/';
 
