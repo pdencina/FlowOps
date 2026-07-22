@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       { data: { tenantId: tenant.id, userId: user.id } },
       { status: 201 },
     );
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Validation failed', details: error.errors },
@@ -64,7 +64,11 @@ export async function POST(request: NextRequest) {
     }
     console.error('Signup error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Error al crear la organización',
+        message: error?.message || 'Unknown error',
+        code: error?.code || null,
+      },
       { status: 500 },
     );
   }
